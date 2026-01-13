@@ -1,3 +1,22 @@
+def text_to_binary_padded(plaintext, padding_char='#'):
+    while len(plaintext) % 8 != 0:
+        plaintext += padding_char
+    
+    binary_string = ''.join(format(ord(char), '08b') for char in plaintext)
+    
+    return binary_string
+
+def binary_to_text_unpadded(binary_string, padding_char='#'):
+    text_result = ""
+    
+    for i in range(0, len(binary_string), 8):
+        byte_chunk = binary_string[i:i+8]
+        
+        char_code = int(byte_chunk, 2)
+        text_result += chr(char_code)
+        
+    return text_result.rstrip(padding_char)
+
 def subKeyGenerator(key64: str):
     pc1 = [57, 49, 41, 33, 25, 17, 9,
             1, 58, 50, 42, 34, 26, 18,
@@ -176,8 +195,9 @@ def DES_Algorithm(message: str, subKeys48: list, opType: str):
             
 
 def encrypt(message: str, key: int):
+    message_binary = text_to_binary_padded(message)
     block_size = 64
-    blocks = [message[i : i + block_size] for i in range(0, len(message), block_size)]
+    blocks = [message_binary[i : i + block_size] for i in range(0, len(message_binary), block_size)]
     ciphertext = ""
     opType = 'encrypt'
 
@@ -190,13 +210,12 @@ def encrypt(message: str, key: int):
 def decrypt(ciphertext: str, key: int):
     block_size = 64
     blocks = [ciphertext[i : i + block_size] for i in range(0, len(ciphertext), block_size)]
-    plaintext = ""
+    plaintext_binary = ""
     opType = 'decrypt'
 
     for block in blocks:
-        plaintext += DES_Algorithm(block, key, opType) # gurrented to be 64 bits
-
-    return plaintext
+        plaintext_binary += DES_Algorithm(block, key, opType) # gurrented to be 64 bits
+    return binary_to_text_unpadded(plaintext_binary)
 
 
 def main():
