@@ -198,27 +198,31 @@ def DES_Algorithm(message: str, subKeys48: list, opType: str):
     return ciphertext
             
 
-def encrypt(message: str, key: int):
+def encrypt(message: str, subKeys48: list):
     message_binary = text_to_binary_padded(message)
     block_size = 64
     blocks = [message_binary[i : i + block_size] for i in range(0, len(message_binary), block_size)]
     ciphertext = ""
-    opType = 'encrypt'
 
     for block in blocks:
-        ciphertext += DES_Algorithm(block, key, opType) # gurrented to be 64 bits
+        intermediate1 = DES_Algorithm(block, subKeys48[0], 'encrypt') # gurrented to be 64 bits
+        intermediate2 = DES_Algorithm(intermediate1, subKeys48[1], 'decrypt') # gurrented to be 64 bits
+        intermediate3 = DES_Algorithm(intermediate2, subKeys48[2], 'encrypt') # gurrented to be 64 bits
+        ciphertext += intermediate3
 
     return ciphertext
 
 
-def decrypt(ciphertext: str, key: int):
+def decrypt(ciphertext: str, subKeys48: list):
     block_size = 64
     blocks = [ciphertext[i : i + block_size] for i in range(0, len(ciphertext), block_size)]
     plaintext_binary = ""
-    opType = 'decrypt'
 
     for block in blocks:
-        plaintext_binary += DES_Algorithm(block, key, opType) # gurrented to be 64 bits
+        intermediate1 = DES_Algorithm(block, subKeys48[2], 'decrypt') # gurrented to be 64 bits
+        intermediate2 = DES_Algorithm(intermediate1, subKeys48[1], 'encrypt') # gurrented to be 64 bits
+        intermediate3 = DES_Algorithm(intermediate2, subKeys48[0], 'decrypt') # gurrented to be 64 bits
+        plaintext_binary += intermediate3
     return binary_to_text_unpadded(plaintext_binary)
 
 
@@ -226,10 +230,23 @@ def main():
     with open("plaintext_sender.txt", "r", encoding="utf-8") as f:
         plaintext = f.read()
     
-    key64 = "133457799BBCDFF1" # In hexadecimal, must have 16 hex digits = 64 bits
-    decimal_key64 = int(key64, 16)
+    key64_1 = "133457799BBCDFF1" # In hexadecimal, must have 16 hex digits = 64 bits
+    key64_2 = "BBCDFF1133457799"
+    key64_3 = "57799BBCDFF11334"
+    subKeys48 = []
+
+    decimal_key64 = int(key64_1, 16)
     binary_key64 = bin(decimal_key64)[2:].zfill(64)
-    subKeys48 = subKeyGenerator(binary_key64) # K1 to K16
+    subKeys48.append(subKeyGenerator(binary_key64)) # K1 to K16
+
+    decimal_key64 = int(key64_2, 16)
+    binary_key64 = bin(decimal_key64)[2:].zfill(64)
+    subKeys48.append(subKeyGenerator(binary_key64)) # K1 to K16
+
+    decimal_key64 = int(key64_3, 16)
+    binary_key64 = bin(decimal_key64)[2:].zfill(64)
+    subKeys48.append(subKeyGenerator(binary_key64)) # K1 to K16
+    
     
     ciphertext = encrypt(plaintext, subKeys48)
 
